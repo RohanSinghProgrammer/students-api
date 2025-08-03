@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/rohansinghprogrammer/sudents-api/internals/config"
+	"github.com/rohansinghprogrammer/sudents-api/internals/http/handlers/student"
 )
 
 func main() {
@@ -21,9 +22,7 @@ func main() {
 	// Setup Routes
 	router := http.NewServeMux()
 
-	router.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Hello, World!"))
-	})
+	router.HandleFunc("POST /students", student.New())
 
 	// Listen Server
 	server := http.Server{
