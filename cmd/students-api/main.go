@@ -31,6 +31,7 @@ func main() {
 	router.HandleFunc("POST /students", student.New(storage))
 	router.HandleFunc("GET /students", student.GetList(storage))
 	router.HandleFunc("GET /students/{id}", student.GetById(storage))
+	router.HandleFunc("PATCH /students/{id}", student.Update(storage))
 
 	// Listen Server
 	server := http.Server{

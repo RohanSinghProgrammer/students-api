@@ -100,3 +100,49 @@ func (s *Sqlite) GetStudentsList() ([]types.Student, error) {
 	}
 	return students, nil
 }
+
+func (s *Sqlite) UpdateStudent(id uint64, name string, email string, age int) (types.Student, error) {
+
+    // This is a good practice to prevent silent failures.
+    existingStudent, err := s.GetStudentById(id)
+    if err != nil {
+        return types.Student{}, err // Will return sql.ErrNoRows if student not found
+    }
+
+    // Prepare the update statement.
+    stmt, err := s.DB.Prepare("UPDATE students SET name=?, email=?, age=? WHERE id=?")
+    if err != nil {
+        return types.Student{}, err
+    }
+    defer stmt.Close()
+
+    // Execute the update query.
+    result, err := stmt.Exec(name, email, age, id)
+    if err != nil {
+        return types.Student{}, err
+    }
+
+    // Check how many rows were affected.
+    // If RowsAffected is 0, it means the update didn't happen (though in this
+    // case, our previous check for the student's existence makes this less likely).
+    rowsAffected, err := result.RowsAffected()
+    if err != nil {
+        return types.Student{}, err
+    }
+
+    if rowsAffected == 0 {
+        // This case might be rare due to the existence check, but it's good practice.
+        return types.Student{}, sql.ErrNoRows
+    }
+
+    // Construct the updated student object from the parameters and return it.
+    // This avoids a second, unnecessary database query.
+    updatedStudent := types.Student{
+        ID:    existingStudent.ID, // Keep the original ID
+        Name:  name,
+        Email: email,
+        Age:   age,
+    }
+
+    return updatedStudent, nil
+}

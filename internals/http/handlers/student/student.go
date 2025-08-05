@@ -83,3 +83,46 @@ func GetList(storage storage.Storage) http.HandlerFunc {
 		response.WriteJson(w, http.StatusOK, students)
 	}
 }
+
+func Update(storage storage.Storage) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+		parsedId, err := strconv.ParseUint(id, 10, 64)
+		if err != nil {
+			slog.Error("Invalid ID")
+			response.WriteJson(w, http.StatusBadRequest, map[string]string{"Invalid ID": id})
+			return
+		}
+
+		var student types.Student
+		validate := validator.New()
+
+		err = json.NewDecoder(r.Body).Decode(&student)
+		if errors.Is(err, io.EOF) {
+			response.WriteJson(w, http.StatusBadRequest, response.GeneralError(err))
+			return
+		}
+
+		if err := validate.Struct(student); err != nil {
+			validateErrs := err.(validator.ValidationErrors)
+			response.WriteJson(w, http.StatusBadRequest, response.ValidateError(validateErrs))
+			return
+		}
+
+		updatedStudent, err := storage.UpdateStudent(
+			parsedId,
+			student.Name,
+			student.Email,
+			student.Age,
+		)
+
+		if err != nil {
+			slog.Error("Error updating student", slog.String("error", err.Error()))
+			response.WriteJson(w, http.StatusInternalServerError, response.GeneralError(err))
+			return
+		}
+
+		response.WriteJson(w, http.StatusOK, updatedStudent)
+		slog.Info("Student updated successfully", slog.Uint64("id", parsedId))
+	}
+}
