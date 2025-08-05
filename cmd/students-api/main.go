@@ -32,6 +32,7 @@ func main() {
 	router.HandleFunc("GET /students", student.GetList(storage))
 	router.HandleFunc("GET /students/{id}", student.GetById(storage))
 	router.HandleFunc("PATCH /students/{id}", student.Update(storage))
+	router.HandleFunc("DELETE /students/{id}", student.Delete(storage))
 
 	// Listen Server
 	server := http.Server{
