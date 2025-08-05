@@ -29,6 +29,7 @@ func main() {
 	router := http.NewServeMux()
 
 	router.HandleFunc("POST /students", student.New(storage))
+	router.HandleFunc("GET /students/{id}", student.GetById(storage))
 
 	// Listen Server
 	server := http.Server{
@@ -36,7 +37,7 @@ func main() {
 		Handler: router,
 	}
 
-	log.Printf("Starting server on %s", cfg.Address)
+	log.Printf("Starting server on http://localhost%s", cfg.Address)
 
 	done := make(chan os.Signal, 1)
 

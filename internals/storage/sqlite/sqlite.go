@@ -3,8 +3,9 @@ package sqlite
 import (
 	"database/sql"
 
+	_ "github.com/mattn/go-sqlite3"
 	"github.com/rohansinghprogrammer/sudents-api/internals/config"
-	_"github.com/mattn/go-sqlite3"
+	"github.com/rohansinghprogrammer/sudents-api/internals/types"
 )
 
 type Sqlite struct {
@@ -38,6 +39,7 @@ func (s *Sqlite) CreateStudent(name string, email string, age int) (uint64, erro
 	if err != nil {
 		return 0, err
 	}
+	defer stmt.Close()
 
 	results, err := stmt.Exec(name, email, age)
 	if err != nil {
@@ -50,4 +52,22 @@ func (s *Sqlite) CreateStudent(name string, email string, age int) (uint64, erro
 	}
 
 	return uint64(lastId), nil
+}
+
+func (s *Sqlite) GetStudentById(id uint64) (types.Student, error) {
+	stmt, err := s.DB.Prepare(`SELECT id, name, email, age FROM students WHERE id=? LIMIT 1`)
+	if err != nil {
+		return types.Student{}, err
+	}
+
+	var student types.Student
+	err = stmt.QueryRow(id).Scan(&student.ID, &student.Name, &student.Email, &student.Age)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return types.Student{}, err
+		}
+		return types.Student{}, err
+	}
+
+	return student, nil
 }

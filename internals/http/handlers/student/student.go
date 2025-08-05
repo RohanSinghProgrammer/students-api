@@ -6,6 +6,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"strconv"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/rohansinghprogrammer/sudents-api/internals/storage"
@@ -48,5 +49,24 @@ func New(storage storage.Storage) http.HandlerFunc {
 		})
 
 		slog.Info("Student created successfully", slog.Int64("lastId", int64(lastId)))
+	}
+}
+
+func GetById(storage storage.Storage) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+		parsedId, err := strconv.ParseUint(id, 10, 64)
+		if err != nil {
+			slog.Error("Invalid ID")
+			response.WriteJson(w, http.StatusBadRequest, map[string]string{"Invalid ID": id})
+			return
+		}
+		student, err := storage.GetStudentById(parsedId)
+		if err != nil {
+			slog.Error("Student doesn't exists")
+			response.WriteJson(w, http.StatusInternalServerError, map[string]string{"Error": "Student not found"})
+			return
+		}
+		response.WriteJson(w, http.StatusOK, student)
 	}
 }
