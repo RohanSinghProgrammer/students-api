@@ -12,17 +12,23 @@ import (
 
 	"github.com/rohansinghprogrammer/sudents-api/internals/config"
 	"github.com/rohansinghprogrammer/sudents-api/internals/http/handlers/student"
+	"github.com/rohansinghprogrammer/sudents-api/internals/storage/sqlite"
 )
 
 func main() {
 	// Load Confg
 	cfg := config.MustLoadConfig()
 	// Setup DB
+	storage, err := sqlite.New(cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
 
+	slog.Info("Storage Initialized", slog.String("env", cfg.Env))
 	// Setup Routes
 	router := http.NewServeMux()
 
-	router.HandleFunc("POST /students", student.New())
+	router.HandleFunc("POST /students", student.New(storage))
 
 	// Listen Server
 	server := http.Server{

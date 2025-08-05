@@ -8,11 +8,12 @@ import (
 	"net/http"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/rohansinghprogrammer/sudents-api/internals/storage"
 	"github.com/rohansinghprogrammer/sudents-api/internals/types"
 	"github.com/rohansinghprogrammer/sudents-api/internals/utils/response"
 )
 
-func New() http.HandlerFunc {
+func New(storage storage.Storage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		var student types.Student
@@ -31,16 +32,21 @@ func New() http.HandlerFunc {
 			return
 		}
 
-		err = response.WriteJson(w, http.StatusCreated, map[string]string{
-			"message": "Student created successfully",
-			"id":      student.ID,
-		})
+		lastId, err := storage.CreateStudent(
+			student.Name,
+			student.Email,
+			student.Age,
+		)
 
 		if err != nil {
 			response.WriteJson(w, http.StatusBadRequest, response.GeneralError(err))
 			return
 		}
 
-		slog.Info("Student created successfully", slog.String("id", student.ID))
+		response.WriteJson(w, http.StatusCreated, map[string]int64{
+			"Student Created Successfuly! , ID: ": int64(lastId),
+		})
+
+		slog.Info("Student created successfully", slog.Int64("lastId", int64(lastId)))
 	}
 }
